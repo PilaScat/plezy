@@ -2116,6 +2116,38 @@ void main() {
       });
     });
 
+    test('a remote Stop closes the session at the playhead and keeps it closed', () {
+      fakeAsync((async) {
+        final client = _TerminatingProgressClient();
+        final player = _FakePlayer(position: const Duration(seconds: 5), duration: const Duration(seconds: 100));
+        final tracker = PlaybackProgressTracker(
+          client: client,
+          metadata: _meta(),
+          player: player,
+          isOffline: false,
+          updateInterval: const Duration(seconds: 1),
+        );
+
+        tracker.startTracking();
+        async.flushMicrotasks();
+
+        player.position = const Duration(seconds: 12);
+        tracker.stopForServer();
+        async.flushMicrotasks();
+        expect(tracker.stoppedByServer, isTrue);
+        expect(client.reportKinds, [PlaybackReportKind.started, PlaybackReportKind.stopped]);
+        expect(client.updateProgressCalls.last.time, 12000);
+
+        tracker.stopForServer();
+        player.position = const Duration(seconds: 20);
+        async.elapse(const Duration(seconds: 3));
+        async.flushMicrotasks();
+        expect(client.reportKinds, [PlaybackReportKind.started, PlaybackReportKind.stopped]);
+
+        tracker.dispose();
+      });
+    });
+
     test('the terminal report after a termination records where playback ended and marks the item watched', () async {
       final client = _TerminatingProgressClient();
       final player = _FakePlayer(position: const Duration(seconds: 50), duration: const Duration(seconds: 100));

@@ -98,6 +98,21 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     return true;
   }
 
+  void _stopLiveForRemoteServer() {
+    final currentPlayer = player;
+    if (!mounted || _shuttingDown || currentPlayer == null || _live.session == null || _live.stoppedByServer) return;
+    if (_transitionGate.transition != PlaybackTransition.idle) return;
+    _live.stoppedByServer = true;
+    _stopLiveTimelineUpdates();
+    unawaited(_sendLiveTimeline('stopped'));
+    unawaited(_wakelockController.setEnabled(false));
+    unawaited(
+      currentPlayer.stop().catchError((Object e, StackTrace st) {
+        appLogger.w('Failed to stop live playback after a remote Stop', error: e, stackTrace: st);
+      }),
+    );
+  }
+
   void _stopLiveTimelineUpdates() {
     _live.timelineGeneration++;
     _live.timelineTimer?.cancel();

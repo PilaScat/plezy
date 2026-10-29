@@ -34,6 +34,7 @@ extension _VideoPlayerErrorMethods on VideoPlayerScreenState {
       liveRetrying: _live.retrying,
       liveFallbackLevel: _live.fallbackLevel,
       liveRetryFailed: _live.retryFailed,
+      liveStoppedByServer: _live.stoppedByServer,
     );
 
     switch (action) {

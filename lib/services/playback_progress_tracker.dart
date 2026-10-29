@@ -383,13 +383,15 @@ class PlaybackProgressTracker {
   ///
   /// Deliberately not a failure: no backoff and no offline-queue write —
   /// the server received the report and answered it.
-  void _handleServerTermination(PlaybackSessionTerminatedException e) {
+  void stopForServer() => _handleServerTermination('remote Stop command');
+
+  void _handleServerTermination(Object cause) {
     if (_serverTerminatedSession) return;
     _serverTerminatedSession = true;
     // Terminated while paused (the paused-too-long case): the viewer
     // unpausing is the resume.
     _pausedSinceServerTermination = !player.state.isActive;
-    appLogger.w('Closing reporting session for ${metadata.id}: terminated server-side', error: e);
+    appLogger.w('Closing reporting session for ${metadata.id}: terminated server-side', error: cause);
     _serverTerminationStop = sendProgress('stopped');
   }
 

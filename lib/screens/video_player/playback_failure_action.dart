@@ -65,8 +65,11 @@ PlaybackFailureAction resolvePlaybackFailureAction({
   required bool liveRetrying,
   required int liveFallbackLevel,
   required bool liveRetryFailed,
+  required bool liveStoppedByServer,
 }) {
   if (cause == PlayerError.audioOutputFailed) return PlaybackFailureAction.fatal;
+
+  if (isLive && liveStoppedByServer) return PlaybackFailureAction.ignore;
 
   if (!isLive && fatalHttpStatuses.contains(403)) return PlaybackFailureAction.playbackNotAllowedDialog;
 

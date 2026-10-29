@@ -224,7 +224,9 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
               if (_eofRecovery.parked) {
                 // A parked stream is dead server-side; a seek-in-place would
                 // land in the drained cache — only a fresh resolve replaces it.
-                unawaited(_eofRecovery.retry(reason: 'server back online'));
+                if (!(_progressTracker?.stoppedByServer ?? false)) {
+                  unawaited(_eofRecovery.retry(reason: 'server back online'));
+                }
               } else {
                 _forceStreamReconnect();
               }

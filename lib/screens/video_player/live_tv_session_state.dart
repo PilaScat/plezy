@@ -98,6 +98,7 @@ class LiveTvSessionState {
   int fallbackLevel = 0;
   bool retrying = false;
   bool retryFailed = false;
+  bool stoppedByServer = false;
 
   /// Whether the timeline heartbeat should restart when the app resumes
   /// from the background (it is suspended on hide).
@@ -307,6 +308,7 @@ class LiveTvSessionState {
     session = newSession;
     captureBuffer = newSession.captureBuffer;
     selectedSubtitle = null;
+    stoppedByServer = false;
   }
 
   /// Re-map a subtitle selection onto a replacement session's track list.

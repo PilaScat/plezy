@@ -93,6 +93,7 @@ import '../utils/player_utils.dart';
 import '../utils/orientation_helper.dart';
 import '../utils/platform_detector.dart';
 import '../utils/provider_extensions.dart';
+import '../utils/remote_stop_notifier.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/stream_buffer_sizing.dart';
 import '../utils/video_player_navigation.dart';
@@ -791,6 +792,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   StreamSubscription<AppleTvRemotePlayPauseAction>? _appleTvPlayPauseSubscription;
   TrackManager? _trackManager;
   StreamSubscription<void>? _sleepTimerSubscription;
+  StreamSubscription<ServerId>? _remoteStopSubscription;
   bool _isHandlingBack = false;
 
   /// Cancel scope for the screen's player-driven stream subscriptions — the
@@ -1175,6 +1177,15 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _http503Watchdog.disarm();
   }
 
+  void _onRemoteStop(ServerId serverId) {
+    if (serverId != _currentMetadata.serverId) return;
+    if (widget.isLive) {
+      _stopLiveForRemoteServer();
+    } else {
+      _stopForRemoteServer();
+    }
+  }
+
   Future<void> _playWithPlaybackIntent(Player currentPlayer) {
     if (_shuttingDown) return Future<void>.value();
     if (!automotivePlaybackAllowedNow()) {
@@ -1183,6 +1194,9 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       return Future<void>.value();
     }
     _playbackIntentShouldPlay = true;
+    if (widget.isLive && _live.stoppedByServer) {
+      return _switchLiveChannel(0);
+    }
     if (widget.isLive && _live.retryFailed) {
       return _retryLiveStreamForPlayIntent();
     }
@@ -1206,7 +1220,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       appLogger.d('Play/pause requested while Android Automotive app is not resumed; keeping playback paused');
       return _pauseWithPlaybackIntent(currentPlayer);
     }
-    if (widget.isLive && _live.retryFailed) {
+    if (widget.isLive && (_live.retryFailed || _live.stoppedByServer)) {
       return _playWithPlaybackIntent(currentPlayer);
     }
     if (_eofRecovery.parked && _transitionGate.transition == PlaybackTransition.idle) {
@@ -1489,6 +1503,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _sleepTimerSubscription = SleepTimerService().onPrompt.listen((_) {
       if (mounted) _showStillWatchingDialog();
     });
+    _remoteStopSubscription = RemoteStopNotifier().stream.listen(_onRemoteStop);
 
     if (PlatformDetector.isAutomotive()) {
       unawaited(_startPlayerInitializationOnceVehicleAnswers());
@@ -2463,6 +2478,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _cancelPlayerStreamSubscriptions(includeMediaControls: true);
     _appleTvPlayPauseSubscription?.cancel();
     _sleepTimerSubscription?.cancel();
+    _remoteStopSubscription?.cancel();
     // Before the track manager is disposed, not after: its own dispose
     // invalidates the pending selection too, and running the abort second
     // only repeated that on a dead object.
@@ -2931,6 +2947,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     if (remoteCancellation != null) cancellations.add(remoteCancellation);
     final sleepCancellation = _sleepTimerSubscription?.cancel();
     if (sleepCancellation != null) cancellations.add(sleepCancellation);
+    final remoteStopCancellation = _remoteStopSubscription?.cancel();
+    if (remoteStopCancellation != null) cancellations.add(remoteStopCancellation);
 
     final currentPlayer = player;
     // The tracker snapshots duration, tracks, identity and position before

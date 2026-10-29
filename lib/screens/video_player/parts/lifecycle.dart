@@ -333,6 +333,22 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
   /// re-checks that the suspend is still standing, because the restore path
   /// drops the suspended latch before it rebuilds a live session that a late
   /// retry must not report stopped.
+  void _stopForRemoteServer() {
+    final currentPlayer = player;
+    final tracker = _progressTracker;
+    if (!mounted || _shuttingDown || currentPlayer == null || tracker == null || _isOfflinePlayback) return;
+    if (tracker.stoppedByServer || _transitionGate.transition != PlaybackTransition.idle) return;
+    final position = currentPlayer.state.position;
+    tracker.stopForServer();
+    tracker.stopTracking();
+    _eofRecovery.parkAfterServerStop(position);
+    unawaited(
+      currentPlayer.stop().catchError((Object e, StackTrace st) {
+        appLogger.w('Failed to stop playback after a remote Stop', error: e, stackTrace: st);
+      }),
+    );
+  }
+
   Future<void> _redeliverTvBackgroundStopReport({required Duration position, required Duration duration}) async {
     for (var attempt = 0; attempt < TvBackgroundSuspendState.stopReportMaxRetries; attempt++) {
       await Future<void>.delayed(TvBackgroundSuspendState.stopReportRetryDelay);

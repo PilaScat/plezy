@@ -117,6 +117,25 @@ void main() {
     expect(reloads, [const Duration(milliseconds: positionMs)]);
   });
 
+  test('a remote server stop parks at the stop position and a viewer retry reopens there', () async {
+    final player = shortEofPlayer();
+    addTearDown(player.dispose);
+    final (:recovery, :reloads, setFault: _) = build(player);
+
+    recovery.parkAfterServerStop(const Duration(seconds: 754));
+    expect(recovery.parked, isTrue);
+    expect(await recovery.interceptEof(player), isTrue);
+    expect(reloads, isEmpty);
+
+    await recovery.retry(reason: 'viewer play');
+    expect(reloads, [const Duration(seconds: 754)]);
+    expect(recovery.parked, isFalse);
+
+    recovery.parkAfterServerStop(const Duration(seconds: 800));
+    await recovery.retry(reason: 'seek', resumePosition: const Duration(seconds: 900));
+    expect(reloads.last, const Duration(seconds: 900));
+  });
+
   test('a fault delivered while the source is being read still explains the EOF', () async {
     // mpv hands property changes to the client ahead of queued log lines, so
     // the "Stream ends prematurely" behind an EOF can land after it.

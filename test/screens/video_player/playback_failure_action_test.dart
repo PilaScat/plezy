@@ -9,6 +9,7 @@ PlaybackFailureAction resolve({
   bool liveRetrying = false,
   int liveFallbackLevel = 0,
   bool liveRetryFailed = false,
+  bool liveStoppedByServer = false,
 }) {
   return resolvePlaybackFailureAction(
     cause: cause,
@@ -17,6 +18,7 @@ PlaybackFailureAction resolve({
     liveRetrying: liveRetrying,
     liveFallbackLevel: liveFallbackLevel,
     liveRetryFailed: liveRetryFailed,
+    liveStoppedByServer: liveStoppedByServer,
   );
 }
 
@@ -153,5 +155,28 @@ void main() {
     expect(resolve(), PlaybackFailureAction.fatal);
     expect(resolve(statuses: {503}), PlaybackFailureAction.fatal);
     expect(resolve(cause: 'some-decoder-fault'), PlaybackFailureAction.fatal);
+  });
+
+  group('live session stopped by the server', () {
+    test('stream errors are ignored instead of re-tuning or raising a dialog', () {
+      expect(resolve(isLive: true, liveStoppedByServer: true), PlaybackFailureAction.ignore);
+      expect(resolve(statuses: {500}, isLive: true, liveStoppedByServer: true), PlaybackFailureAction.ignore);
+      expect(
+        resolve(
+          isLive: true,
+          liveFallbackLevel: maxLiveFallbackLevel,
+          liveRetryFailed: true,
+          liveStoppedByServer: true,
+        ),
+        PlaybackFailureAction.ignore,
+      );
+    });
+
+    test('a dead audio output is still fatal', () {
+      expect(
+        resolve(cause: PlayerError.audioOutputFailed, isLive: true, liveStoppedByServer: true),
+        PlaybackFailureAction.fatal,
+      );
+    });
   });
 }

@@ -74,6 +74,7 @@ class SpuriousEofRecovery {
   int _attempts = 0;
   int? _baselineMs;
   bool _parked = false;
+  Duration? _parkedPosition;
 
   /// Whether a player log line is the transport layer reporting a fault.
   ///
@@ -92,6 +93,12 @@ class SpuriousEofRecovery {
   /// Any freshly opened stream ends a dead-stream park (#1520).
   void clearPark() {
     _parked = false;
+    _parkedPosition = null;
+  }
+
+  void parkAfterServerStop(Duration position) {
+    _parkedPosition = position;
+    _park();
   }
 
   /// An item change starts a fresh automatic-recovery budget (loop guard).
@@ -244,9 +251,10 @@ class SpuriousEofRecovery {
     appLogger.i('Retrying dead-stream recovery ($reason)');
     _parked = false;
     final outcome = await _reload(
-      resumePosition: resumePosition ?? currentPlayer.state.position,
+      resumePosition: resumePosition ?? _parkedPosition ?? currentPlayer.state.position,
       reason: 'stream recovery ($reason)',
     );
+    if (outcome == MediaReloadOutcome.opened) _parkedPosition = null;
     if (outcome == MediaReloadOutcome.failed) _park();
   }
 }
