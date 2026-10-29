@@ -333,16 +333,17 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
   /// re-checks that the suspend is still standing, because the restore path
   /// drops the suspended latch before it rebuilds a live session that a late
   /// retry must not report stopped.
-  void _stopForRemoteServer() {
+  bool _stopForRemoteServer() {
     final currentPlayer = player;
     final tracker = _progressTracker;
-    if (!mounted || _shuttingDown || currentPlayer == null || tracker == null || _isOfflinePlayback) return;
-    if (tracker.stoppedByServer || _transitionGate.transition != PlaybackTransition.idle) return;
+    if (!mounted || _shuttingDown || currentPlayer == null || tracker == null || _isOfflinePlayback) return false;
+    if (tracker.stoppedByServer || _transitionGate.transition != PlaybackTransition.idle) return false;
     final position = currentPlayer.state.position;
     tracker.stopForServer();
     tracker.stopTracking();
     _eofRecovery.parkAfterServerStop(position);
     unawaited(_releaseStreamAfterRemoteStop(currentPlayer));
+    return true;
   }
 
   Future<void> _releaseStreamAfterRemoteStop(Player currentPlayer) async {
@@ -352,6 +353,14 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
     } catch (e, st) {
       appLogger.w('Failed to release the stream after a remote Stop', error: e, stackTrace: st);
     }
+  }
+
+  void _showRemoteStopNotice(String? reason) {
+    if (!mounted) return;
+    final text = reason == null
+        ? t.messages.serverStoppedPlayback
+        : t.messages.serverStoppedPlaybackReason(reason: reason);
+    showSnackBar(context, text, duration: VideoPlayerScreenState._remoteStopNoticeDuration);
   }
 
   Future<void> _redeliverTvBackgroundStopReport({required Duration position, required Duration duration}) async {

@@ -143,7 +143,8 @@ void main() {
     _NotificationServer server, {
     MediaBrowserDialect dialect = MediaBrowserDialect.jellyfin,
     Future<void> Function()? registerCapabilities,
-    void Function()? onRemoteStop,
+    void Function(String? message)? onRemoteStop,
+    DateTime Function()? clock,
   }) => track(
     MediaBrowserLibraryEventSocket(
       serverId: ServerId('mb_1'),
@@ -153,6 +154,7 @@ void main() {
       deviceId: 'device-1',
       registerCapabilities: registerCapabilities,
       onRemoteStop: onRemoteStop,
+      clock: clock,
       debounce: const Duration(milliseconds: 100),
       retryBaseDelay: const Duration(milliseconds: 50),
     ),
@@ -599,7 +601,7 @@ void main() {
     test('a Playstate Stop reaches onRemoteStop; other commands do not', () async {
       final server = await startServer();
       var stops = 0;
-      final channel = mediaBrowserSocket(server, onRemoteStop: () => stops++);
+      final channel = mediaBrowserSocket(server, onRemoteStop: (_) => stops++);
       channel.start();
       final socket = await server.nextConnection();
 
@@ -618,6 +620,70 @@ void main() {
       await _waitFor(() => stops == 1);
       await Future<void>.delayed(const Duration(milliseconds: 100));
       expect(stops, 1);
+    });
+
+    Map<String, dynamic> displayMessage(String text) => {
+      'MessageType': 'GeneralCommand',
+      'Data': {
+        'Name': 'DisplayMessage',
+        'Arguments': {'Header': 'Stream Terminated', 'Text': text, 'TimeoutMs': '5000'},
+      },
+    };
+    const stopFrame = {
+      'MessageType': 'Playstate',
+      'Data': {'Command': 'Stop'},
+    };
+
+    test('a DisplayMessage right before a Stop travels with it, once', () async {
+      final server = await startServer();
+      final stops = <String?>[];
+      final channel = mediaBrowserSocket(server, onRemoteStop: stops.add);
+      channel.start();
+      final socket = await server.nextConnection();
+
+      server.send(socket, displayMessage('  Wrong channel, retune please  '));
+      server.send(socket, stopFrame);
+      server.send(socket, stopFrame);
+
+      await _waitFor(() => stops.length == 2);
+      expect(stops, ['Wrong channel, retune please', null]);
+    });
+
+    test('a DisplayMessage with no Stop is never delivered', () async {
+      final server = await startServer();
+      final stops = <String?>[];
+      final channel = mediaBrowserSocket(server, onRemoteStop: stops.add);
+      channel.start();
+      final socket = await server.nextConnection();
+
+      server.send(socket, displayMessage('Server restarting'));
+      server.send(socket, {
+        'MessageType': 'GeneralCommand',
+        'Data': {
+          'Name': 'DisplayMessage',
+          'Arguments': {'Text': '   '},
+        },
+      });
+
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(stops, isEmpty);
+    });
+
+    test('a DisplayMessage older than the window does not ride a later Stop', () async {
+      final server = await startServer();
+      var now = DateTime(2026, 10, 29, 15);
+      final stops = <String?>[];
+      final channel = mediaBrowserSocket(server, onRemoteStop: stops.add, clock: () => now);
+      channel.start();
+      final socket = await server.nextConnection();
+
+      server.send(socket, displayMessage('Earlier note'));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      now = now.add(MediaBrowserLibraryEventSocket.remoteStopMessageWindow + const Duration(seconds: 1));
+      server.send(socket, stopFrame);
+
+      await _waitFor(() => stops.length == 1);
+      expect(stops, [null]);
     });
 
     test('a failing capabilities registration retries and then connects', () async {

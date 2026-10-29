@@ -923,6 +923,8 @@
     "searchPartialResults": "Some media servers could not be searched. Showing available results.",
     "streamInterrupted": "The stream was interrupted. Press play or seek to retry.",
     "liveStreamInterrupted": "The live stream was interrupted. Press play to retry.",
+    "serverStoppedPlayback": "Playback was stopped by the server.",
+    "serverStoppedPlaybackReason": "Playback was stopped by the server.\n${reason}",
     "fileInfoNotAvailable": "File information not available",
     "playbackAuthenticationRequired": "Sign in to the media server again to play this item.",
     "playbackServerUnavailable": "The media server is unavailable. Try again later.",

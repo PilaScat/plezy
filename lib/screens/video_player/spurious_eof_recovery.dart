@@ -98,7 +98,8 @@ class SpuriousEofRecovery {
 
   void parkAfterServerStop(Duration position) {
     _parkedPosition = position;
-    _park();
+    _parked = true;
+    unawaited(_wakelock.setEnabled(false));
   }
 
   /// An item change starts a fresh automatic-recovery budget (loop guard).

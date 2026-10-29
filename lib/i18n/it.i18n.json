@@ -923,6 +923,8 @@
     "searchPartialResults": "Non è stato possibile cercare in alcuni server multimediali. Vengono mostrati i risultati disponibili.",
     "streamInterrupted": "La riproduzione si è interrotta. Premi Riproduci o vai a un altro punto per riprovare.",
     "liveStreamInterrupted": "La diretta si è interrotta. Premi Riproduci per riprovare.",
+    "serverStoppedPlayback": "La riproduzione è stata interrotta dal server.",
+    "serverStoppedPlaybackReason": "La riproduzione è stata interrotta dal server.\n${reason}",
     "fileInfoNotAvailable": "Informazioni sul file non disponibili",
     "playbackAuthenticationRequired": "Accedi di nuovo al server multimediale per riprodurre questo elemento.",
     "playbackServerUnavailable": "Il server multimediale non è disponibile. Riprova più tardi.",

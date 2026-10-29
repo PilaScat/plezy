@@ -98,15 +98,18 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     return true;
   }
 
-  void _stopLiveForRemoteServer() {
+  bool _stopLiveForRemoteServer() {
     final currentPlayer = player;
-    if (!mounted || _shuttingDown || currentPlayer == null || _live.session == null || _live.stoppedByServer) return;
-    if (_transitionGate.transition != PlaybackTransition.idle) return;
+    if (!mounted || _shuttingDown || currentPlayer == null || _live.session == null || _live.stoppedByServer) {
+      return false;
+    }
+    if (_transitionGate.transition != PlaybackTransition.idle) return false;
     _live.stoppedByServer = true;
     _stopLiveTimelineUpdates();
     unawaited(_sendLiveTimeline('stopped'));
     unawaited(_wakelockController.setEnabled(false));
     unawaited(_releaseStreamAfterRemoteStop(currentPlayer));
+    return true;
   }
 
   void _stopLiveTimelineUpdates() {

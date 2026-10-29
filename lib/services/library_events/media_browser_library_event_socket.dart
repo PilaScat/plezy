@@ -36,11 +36,14 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
     required this.deviceId,
     this.registerCapabilities,
     this.onRemoteStop,
+    DateTime Function()? clock,
     super.channelFactory,
     super.debounce = const Duration(seconds: 2),
     super.retryBaseDelay,
     super.maxConnectAttempts,
-  });
+  }) : _clock = clock ?? DateTime.now;
+
+  static const Duration remoteStopMessageWindow = Duration(seconds: 10);
 
   final MediaBrowserDialect dialect;
 
@@ -52,7 +55,11 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
   /// Runs before each connect (`POST /Sessions/Capabilities/Full`).
   final Future<void> Function()? registerCapabilities;
 
-  final void Function()? onRemoteStop;
+  final void Function(String? message)? onRemoteStop;
+
+  final DateTime Function() _clock;
+  String? _pendingMessage;
+  DateTime? _pendingMessageAt;
 
   Timer? _keepAliveTimer;
 
@@ -97,6 +104,8 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
         _handleLibraryChanged(message['Data']);
       case 'Playstate':
         _handlePlaystate(message['Data']);
+      case 'GeneralCommand':
+        _handleGeneralCommand(message['Data']);
       default:
         // KeepAlive acks, RefreshProgress, UserDataChanged (future watch-state
         // sync seam), session traffic — not library content.
@@ -105,7 +114,22 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
   }
 
   void _handlePlaystate(dynamic data) {
-    if (data is Map && data['Command'] == 'Stop') onRemoteStop?.call();
+    if (data is! Map || data['Command'] != 'Stop') return;
+    final message = _pendingMessage;
+    final messageAt = _pendingMessageAt;
+    _pendingMessage = null;
+    _pendingMessageAt = null;
+    final fresh = messageAt != null && _clock().difference(messageAt) <= remoteStopMessageWindow;
+    onRemoteStop?.call(fresh ? message : null);
+  }
+
+  void _handleGeneralCommand(dynamic data) {
+    if (data is! Map || data['Name'] != 'DisplayMessage') return;
+    final arguments = data['Arguments'];
+    final text = arguments is Map ? arguments['Text']?.toString().trim() : null;
+    if (text == null || text.isEmpty) return;
+    _pendingMessage = text;
+    _pendingMessageAt = _clock();
   }
 
   void _handleLibraryChanged(dynamic data) {

@@ -2569,6 +2569,12 @@ class Translations$messages$en {
 	/// en: 'The live stream was interrupted. Press play to retry.'
 	String get liveStreamInterrupted => 'The live stream was interrupted. Press play to retry.';
 
+	/// en: 'Playback was stopped by the server.'
+	String get serverStoppedPlayback => 'Playback was stopped by the server.';
+
+	/// en: 'Playback was stopped by the server. ${reason}'
+	String serverStoppedPlaybackReason({required Object reason}) => 'Playback was stopped by the server.\n${reason}';
+
 	/// en: 'File information not available'
 	String get fileInfoNotAvailable => 'File information not available';
 
@@ -8958,6 +8964,8 @@ extension on Translations {
 			'messages.searchPartialResults' => 'Some media servers could not be searched. Showing available results.',
 			'messages.streamInterrupted' => 'The stream was interrupted. Press play or seek to retry.',
 			'messages.liveStreamInterrupted' => 'The live stream was interrupted. Press play to retry.',
+			'messages.serverStoppedPlayback' => 'Playback was stopped by the server.',
+			'messages.serverStoppedPlaybackReason' => ({required Object reason}) => 'Playback was stopped by the server.\n${reason}',
 			'messages.fileInfoNotAvailable' => 'File information not available',
 			'messages.playbackAuthenticationRequired' => 'Sign in to the media server again to play this item.',
 			'messages.playbackServerUnavailable' => 'The media server is unavailable. Try again later.',
@@ -9122,10 +9130,10 @@ extension on Translations {
 			'profiles.pinExplain' => '4-digit PIN required to switch profiles.',
 			'profiles.continueButton' => 'Continue',
 			'profiles.pinsDontMatch' => 'PINs don\'t match',
-			'profiles.tokenIdentityMismatch' => 'The Plex profile token resolved to an unexpected server',
-			'connections.sectionTitle' => 'Connections',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.tokenIdentityMismatch' => 'The Plex profile token resolved to an unexpected server',
+			'connections.sectionTitle' => 'Connections',
 			'connections.addConnection' => 'Add connection',
 			'connections.addConnectionSubtitleNoProfile' => 'Sign in with Plex or connect a Jellyfin or Emby server',
 			'connections.addConnectionSubtitleScoped' => ({required Object displayName}) => 'Add to ${displayName}: Plex, Jellyfin, Emby, or another profile connection',
@@ -9636,10 +9644,10 @@ extension on Translations {
 			'liveTv.recordSettings.endLate' => 'End late (seconds)',
 			'liveTv.recordSettings.newOnly' => 'Only new episodes',
 			'liveTv.recordSettings.anyChannel' => 'Record on any channel',
-			'liveTv.recordSettings.anyTime' => 'Record at any time',
-			'liveTv.recordSettings.skipInLibrary' => 'Skip episodes already in the library',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.recordSettings.anyTime' => 'Record at any time',
+			'liveTv.recordSettings.skipInLibrary' => 'Skip episodes already in the library',
 			'liveTv.recordSettings.keepUpTo' => 'Episodes to keep',
 			'liveTv.recordSettings.keepUpToHint' => '0 keeps every episode',
 			'liveTv.startingInMinutes' => ({required Object minutes}) => 'Starting in ${minutes} min',
@@ -10150,10 +10158,10 @@ extension on Translations {
 			'performanceOverlay.fps' => 'FPS',
 			'performanceOverlay.decoderAndroidHw' => 'Android HW',
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
-			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
-			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
+			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',
 			'performanceOverlay.decoderHardware' => 'Hardware',

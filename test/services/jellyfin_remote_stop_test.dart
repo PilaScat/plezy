@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:plezy/media/ids.dart';
 import 'package:plezy/services/jellyfin_client.dart';
 import 'package:plezy/services/library_events/media_browser_library_event_socket.dart';
 import 'package:plezy/utils/remote_stop_notifier.dart';
@@ -40,15 +39,17 @@ void main() {
         expect(body['SupportedCommands'], isEmpty);
       });
 
-      test('a Stop is published for this server', () async {
-        final stops = <ServerId>[];
+      test('a Stop is published for this server with its message', () async {
+        final stops = <RemoteStop>[];
         final subscription = RemoteStopNotifier().stream.listen(stops.add);
         addTearDown(subscription.cancel);
 
-        socket.onRemoteStop!();
+        socket.onRemoteStop!('Transcoding 4K for nobody');
+        socket.onRemoteStop!(null);
         await Future<void>.delayed(Duration.zero);
 
-        expect(stops, [client.serverId]);
+        expect(stops.map((stop) => stop.serverId), [client.serverId, client.serverId]);
+        expect(stops.map((stop) => stop.message), ['Transcoding 4K for nobody', null]);
       });
     });
   }

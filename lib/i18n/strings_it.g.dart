@@ -1040,6 +1040,8 @@ class _Translations$messages$it extends Translations$messages$en {
 	@override String get searchPartialResults => 'Non è stato possibile cercare in alcuni server multimediali. Vengono mostrati i risultati disponibili.';
 	@override String get streamInterrupted => 'La riproduzione si è interrotta. Premi Riproduci o vai a un altro punto per riprovare.';
 	@override String get liveStreamInterrupted => 'La diretta si è interrotta. Premi Riproduci per riprovare.';
+	@override String get serverStoppedPlayback => 'La riproduzione è stata interrotta dal server.';
+	@override String serverStoppedPlaybackReason({required Object reason}) => 'La riproduzione è stata interrotta dal server.\n${reason}';
 	@override String get fileInfoNotAvailable => 'Informazioni sul file non disponibili';
 	@override String get playbackAuthenticationRequired => 'Accedi di nuovo al server multimediale per riprodurre questo elemento.';
 	@override String get playbackServerUnavailable => 'Il server multimediale non è disponibile. Riprova più tardi.';
@@ -4252,6 +4254,8 @@ extension on TranslationsIt {
 			'messages.searchPartialResults' => 'Non è stato possibile cercare in alcuni server multimediali. Vengono mostrati i risultati disponibili.',
 			'messages.streamInterrupted' => 'La riproduzione si è interrotta. Premi Riproduci o vai a un altro punto per riprovare.',
 			'messages.liveStreamInterrupted' => 'La diretta si è interrotta. Premi Riproduci per riprovare.',
+			'messages.serverStoppedPlayback' => 'La riproduzione è stata interrotta dal server.',
+			'messages.serverStoppedPlaybackReason' => ({required Object reason}) => 'La riproduzione è stata interrotta dal server.\n${reason}',
 			'messages.fileInfoNotAvailable' => 'Informazioni sul file non disponibili',
 			'messages.playbackAuthenticationRequired' => 'Accedi di nuovo al server multimediale per riprodurre questo elemento.',
 			'messages.playbackServerUnavailable' => 'Il server multimediale non è disponibile. Riprova più tardi.',
@@ -4418,10 +4422,10 @@ extension on TranslationsIt {
 			'profiles.pinsDontMatch' => 'I PIN non corrispondono',
 			'profiles.tokenIdentityMismatch' => 'Il token del profilo Plex è stato associato a un server imprevisto',
 			'connections.sectionTitle' => 'Connessioni',
-			'connections.addConnection' => 'Aggiungi connessione',
-			'connections.addConnectionSubtitleNoProfile' => 'Accedi con Plex o collega un server Jellyfin o Emby',
 			_ => null,
 		} ?? switch (path) {
+			'connections.addConnection' => 'Aggiungi connessione',
+			'connections.addConnectionSubtitleNoProfile' => 'Accedi con Plex o collega un server Jellyfin o Emby',
 			'connections.addConnectionSubtitleScoped' => ({required Object displayName}) => 'Aggiungi a ${displayName}: Plex, Jellyfin, Emby o la connessione di un altro profilo',
 			'connections.sessionExpiredOne' => ({required Object name}) => 'Sessione scaduta per ${name}',
 			'connections.sessionExpiredMany' => ({required Object count}) => 'Sessione scaduta per ${count} server',
@@ -4932,10 +4936,10 @@ extension on TranslationsIt {
 			'liveTv.recordSettings.keepUpTo' => 'Episodi da conservare',
 			'liveTv.recordSettings.keepUpToHint' => '0 conserva tutti gli episodi',
 			'liveTv.startingInMinutes' => ({required Object minutes}) => 'Inizia tra ${minutes} min',
-			'liveTv.dayAtTime' => ({required Object day, required Object time}) => '${day} alle ${time}',
-			'liveTv.invalidPlaybackData' => ({required Object product}) => '${product} ha restituito dati di riproduzione della TV in diretta non validi',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.dayAtTime' => ({required Object day, required Object time}) => '${day} alle ${time}',
+			'liveTv.invalidPlaybackData' => ({required Object product}) => '${product} ha restituito dati di riproduzione della TV in diretta non validi',
 			'liveTv.failedToStartChannel' => 'Impossibile avviare il canale in diretta',
 			'liveTv.failedToBuildStreamUrl' => 'Impossibile creare l\'URL dello stream',
 			'liveTv.playbackStartFailed' => ({required Object reason}) => 'Impossibile avviare il canale: ${reason}',
@@ -5446,10 +5450,10 @@ extension on TranslationsIt {
 			'performanceOverlay.decoderSoftware' => 'Software',
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Attivo',
-			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} errori)',
-			'externalPlayer.title' => 'Lettore esterno',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} errori)',
+			'externalPlayer.title' => 'Lettore esterno',
 			'externalPlayer.useExternalPlayer' => 'Usa un lettore esterno',
 			'externalPlayer.useExternalPlayerDescription' => 'Apri i video in un\'altra app',
 			'externalPlayer.selectPlayer' => 'Seleziona il lettore',

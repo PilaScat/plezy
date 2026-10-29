@@ -510,7 +510,7 @@ class JellyfinClient
           ? null
           : libraryEventChannelFactory(headers: {'Authorization': authorization}),
       registerCapabilities: _registerSessionCapabilities,
-      onRemoteStop: () => RemoteStopNotifier().notifyStop(serverId),
+      onRemoteStop: (message) => RemoteStopNotifier().notifyStop(RemoteStop(serverId, message: message)),
     );
   }
 

@@ -792,7 +792,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   StreamSubscription<AppleTvRemotePlayPauseAction>? _appleTvPlayPauseSubscription;
   TrackManager? _trackManager;
   StreamSubscription<void>? _sleepTimerSubscription;
-  StreamSubscription<ServerId>? _remoteStopSubscription;
+  StreamSubscription<RemoteStop>? _remoteStopSubscription;
+  static const Duration _remoteStopNoticeDuration = Duration(seconds: 10);
   bool _isHandlingBack = false;
 
   /// Cancel scope for the screen's player-driven stream subscriptions — the
@@ -1177,13 +1178,10 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _http503Watchdog.disarm();
   }
 
-  void _onRemoteStop(ServerId serverId) {
-    if (serverId != _currentMetadata.serverId) return;
-    if (widget.isLive) {
-      _stopLiveForRemoteServer();
-    } else {
-      _stopForRemoteServer();
-    }
+  void _onRemoteStop(RemoteStop stop) {
+    if (stop.serverId != _currentMetadata.serverId) return;
+    final stopped = widget.isLive ? _stopLiveForRemoteServer() : _stopForRemoteServer();
+    if (stopped) _showRemoteStopNotice(stop.message);
   }
 
   Future<void> _playWithPlaybackIntent(Player currentPlayer) {
