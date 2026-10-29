@@ -342,11 +342,16 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
     tracker.stopForServer();
     tracker.stopTracking();
     _eofRecovery.parkAfterServerStop(position);
-    unawaited(
-      currentPlayer.stop().catchError((Object e, StackTrace st) {
-        appLogger.w('Failed to stop playback after a remote Stop', error: e, stackTrace: st);
-      }),
-    );
+    unawaited(_releaseStreamAfterRemoteStop(currentPlayer));
+  }
+
+  Future<void> _releaseStreamAfterRemoteStop(Player currentPlayer) async {
+    try {
+      await _pauseWithPlaybackIntent(currentPlayer);
+      await currentPlayer.stop();
+    } catch (e, st) {
+      appLogger.w('Failed to release the stream after a remote Stop', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _redeliverTvBackgroundStopReport({required Duration position, required Duration duration}) async {

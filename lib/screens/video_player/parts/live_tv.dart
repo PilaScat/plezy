@@ -106,11 +106,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     _stopLiveTimelineUpdates();
     unawaited(_sendLiveTimeline('stopped'));
     unawaited(_wakelockController.setEnabled(false));
-    unawaited(
-      currentPlayer.stop().catchError((Object e, StackTrace st) {
-        appLogger.w('Failed to stop live playback after a remote Stop', error: e, stackTrace: st);
-      }),
-    );
+    unawaited(_releaseStreamAfterRemoteStop(currentPlayer));
   }
 
   void _stopLiveTimelineUpdates() {
