@@ -135,8 +135,8 @@ class RecordingConflictException extends MediaServerException {
 ///
 /// Plex signals this with `terminationCode`/`terminationText` on the
 /// MediaContainer of a timeline report response. The MediaBrowser backends
-/// deliver admin stops as a WebSocket remote-control command Plezy does not
-/// subscribe to, so they never throw this — intentionally unsupported there.
+/// deliver admin stops as a WebSocket `Playstate` command instead (see
+/// [RemoteStopNotifier]), so they never throw this.
 ///
 /// Progress reporting must stop when this is thrown: continuing the heartbeat
 /// loop re-registers the session server-side as a zombie row the admin can no

@@ -143,6 +143,7 @@ void main() {
     _NotificationServer server, {
     MediaBrowserDialect dialect = MediaBrowserDialect.jellyfin,
     Future<void> Function()? registerCapabilities,
+    void Function()? onRemoteStop,
   }) => track(
     MediaBrowserLibraryEventSocket(
       serverId: ServerId('mb_1'),
@@ -151,6 +152,7 @@ void main() {
       accessToken: 'access-1',
       deviceId: 'device-1',
       registerCapabilities: registerCapabilities,
+      onRemoteStop: onRemoteStop,
       debounce: const Duration(milliseconds: 100),
       retryBaseDelay: const Duration(milliseconds: 50),
     ),
@@ -548,7 +550,7 @@ void main() {
       expect(events, isEmpty);
     });
 
-    test('Emby registers capabilities before every connect; Jellyfin never does', () async {
+    test('both dialects register capabilities before every connect', () async {
       final server = await startServer();
       var registrations = 0;
       final emby = mediaBrowserSocket(
@@ -573,7 +575,49 @@ void main() {
       final jellyfin = mediaBrowserSocket(jellyfinServer, registerCapabilities: () async => jellyfinRegistrations++);
       jellyfin.start();
       await jellyfinServer.nextConnection();
-      expect(jellyfinRegistrations, 0);
+      expect(jellyfinRegistrations, 1);
+    });
+
+    test('a failing Jellyfin registration still connects for library events', () async {
+      final server = await startServer();
+      var registrations = 0;
+      final channel = mediaBrowserSocket(
+        server,
+        registerCapabilities: () async {
+          registrations++;
+          throw Exception('server busy');
+        },
+      );
+      channel.start();
+      await server.nextConnection();
+      expect(registrations, 1);
+
+      server.send(server.sockets.single, _libraryChangedFrame);
+      await channel.events.first.timeout(const Duration(seconds: 5));
+    });
+
+    test('a Playstate Stop reaches onRemoteStop; other commands do not', () async {
+      final server = await startServer();
+      var stops = 0;
+      final channel = mediaBrowserSocket(server, onRemoteStop: () => stops++);
+      channel.start();
+      final socket = await server.nextConnection();
+
+      for (final command in ['Pause', 'Unpause', 'PlayPause', 'Seek']) {
+        server.send(socket, {
+          'MessageType': 'Playstate',
+          'Data': {'Command': command, 'SeekPositionTicks': 10000000},
+        });
+      }
+      server.send(socket, {'MessageType': 'Playstate', 'Data': 'Stop'});
+      server.send(socket, {
+        'MessageType': 'Playstate',
+        'Data': {'Command': 'Stop', 'ControllingUserId': 'admin'},
+      });
+
+      await _waitFor(() => stops == 1);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(stops, 1);
     });
 
     test('a failing capabilities registration retries and then connects', () async {

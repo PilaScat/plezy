@@ -54,6 +54,7 @@ import '../utils/app_logger.dart';
 import '../utils/device_identity.dart';
 import '../utils/failover_http_client.dart';
 import '../utils/media_server_retry.dart';
+import '../utils/remote_stop_notifier.dart';
 import '../utils/future_extensions.dart';
 import '../utils/media_server_timeouts.dart';
 import '../utils/log_redaction_manager.dart';
@@ -508,21 +509,20 @@ class JellyfinClient
       channelFactory: authorization == null
           ? null
           : libraryEventChannelFactory(headers: {'Authorization': authorization}),
-      registerCapabilities: dialect.requiresSessionCapabilitiesForLibraryEvents
-          ? _registerSessionCapabilitiesForEvents
-          : null,
+      registerCapabilities: _registerSessionCapabilities,
+      onRemoteStop: () => RemoteStopNotifier().notifyStop(serverId),
     );
   }
 
   /// `POST /Sessions/Capabilities/Full` with a minimal payload (verified 204
   /// on Emby 4.9.5, after which the socket receives `LibraryChanged`).
-  Future<void> _registerSessionCapabilitiesForEvents() async {
+  Future<void> _registerSessionCapabilities() async {
     final response = await _http.post(
       '/Sessions/Capabilities/Full',
       body: {
         'PlayableMediaTypes': ['Video', 'Audio'],
         'SupportedCommands': <String>[],
-        'SupportsMediaControl': false,
+        'SupportsMediaControl': true,
         'SupportsSync': false,
       },
     );

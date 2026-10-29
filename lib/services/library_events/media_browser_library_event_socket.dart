@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import '../../media/media_browser_dialect.dart';
+import '../../utils/app_logger.dart';
 import 'library_event_socket.dart';
 
 /// MediaBrowser (Jellyfin/Emby) session socket:
@@ -34,6 +35,7 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
     required this.accessToken,
     required this.deviceId,
     this.registerCapabilities,
+    this.onRemoteStop,
     super.channelFactory,
     super.debounce = const Duration(seconds: 2),
     super.retryBaseDelay,
@@ -47,9 +49,10 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
   final String accessToken;
   final String deviceId;
 
-  /// Runs before each connect on dialects that need it (Emby's
-  /// `POST /Sessions/Capabilities/Full`).
+  /// Runs before each connect (`POST /Sessions/Capabilities/Full`).
   final Future<void> Function()? registerCapabilities;
+
+  final void Function()? onRemoteStop;
 
   Timer? _keepAliveTimer;
 
@@ -64,10 +67,23 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
 
   @override
   Future<void> prepareConnection() async {
-    if (!dialect.requiresSessionCapabilitiesForLibraryEvents) return;
-    // Without this Emby accepts the socket but never routes LibraryChanged
-    // to it. A failure fails the attempt into the normal retry path.
-    await registerCapabilities?.call();
+    final register = registerCapabilities;
+    if (register == null) return;
+    if (dialect.requiresSessionCapabilitiesForLibraryEvents) {
+      // Without this Emby accepts the socket but never routes LibraryChanged
+      // to it. A failure fails the attempt into the normal retry path.
+      await register();
+      return;
+    }
+    try {
+      await register();
+    } catch (error, stackTrace) {
+      appLogger.w(
+        'LibraryEventSocket[$serverId]: remote control registration failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override
@@ -79,11 +95,17 @@ class MediaBrowserLibraryEventSocket extends LibraryEventSocket {
         _startKeepAlive(message['Data']);
       case 'LibraryChanged':
         _handleLibraryChanged(message['Data']);
+      case 'Playstate':
+        _handlePlaystate(message['Data']);
       default:
         // KeepAlive acks, RefreshProgress, UserDataChanged (future watch-state
         // sync seam), session traffic — not library content.
         break;
     }
+  }
+
+  void _handlePlaystate(dynamic data) {
+    if (data is Map && data['Command'] == 'Stop') onRemoteStop?.call();
   }
 
   void _handleLibraryChanged(dynamic data) {
